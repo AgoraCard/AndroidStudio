@@ -13,7 +13,7 @@
         android:layout_height="wrap_content"
         android:text="Scan QR-Code"
         android:textSize="16sp"
-        android:id="@+id/btn_scan"
+        android:id="@+id/btnscan"
         />
 
 
@@ -27,7 +27,7 @@
         android:layout_marginRight="20dp"
         android:layout_marginLeft="20dp"
         android:layout_marginBottom="20dp"
-        android:id="@+id/RFID_eingabe"
+        android:id="@+id/USEReingabe"
         />
 
     <EditText
@@ -41,7 +41,7 @@
         android:layout_marginRight="20dp"
         android:layout_marginLeft="20dp"
         android:layout_marginBottom="20dp"
-        android:id="@+id/Password_eingabe"
+        android:id="@+id/Passwordeingabe"
         />
 
     <Button
@@ -49,24 +49,7 @@
         android:layout_height="wrap_content"
         android:text="Login"
         android:textSize="16sp"
-        android:id="@+id/btn_login"
+        android:id="@+id/btnlogReg"
         />
-
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:text="Dialog"
-        android:textSize="16sp"
-        android:id="@+id/btn_dialog"
-        />
-
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:text="Login Art 2"
-        android:textSize="16sp"
-        android:id="@+id/loginZwei"/>
 
 </LinearLayout>

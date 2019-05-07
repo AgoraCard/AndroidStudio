@@ -1,6 +1,7 @@
 package com.example.agoracard;
 
 import android.app.PendingIntent;
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
@@ -8,16 +9,21 @@ import android.nfc.NfcAdapter;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthResult;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.auth.FirebaseAuth;
 
 public class MainActivity extends AppCompatActivity implements Dialog.DialogListener {
 
@@ -29,11 +35,10 @@ public class MainActivity extends AppCompatActivity implements Dialog.DialogList
     NfcAdapter nfcAdapter;
 
     Button weiter;
+    Button loginZwei;
 
-    //Um Login Daten aus der Firebase Datenbank zu holen, Login
-    private DatabaseReference ref;
-
-
+    //Um Login zu machen
+    private FirebaseAuth firebaseAuth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,9 +49,9 @@ public class MainActivity extends AppCompatActivity implements Dialog.DialogList
         passeingabe = (EditText)findViewById(R.id.Password_eingabe);
         login = (Button)findViewById(R.id.btn_login);
         scan_btn = (Button)findViewById(R.id.btn_scan);
+        loginZwei = (Button)findViewById(R.id.loginZwei);
 
-        //Um Daten aus der Firebase Datenbank zu holen, Login
-        ref = FirebaseDatabase.getInstance().getReference().child("RFID");
+        firebaseAuth = FirebaseAuth.getInstance();
 
         //Zeigt an, ob NFC verfügbar
         nfcAdapter = NfcAdapter.getDefaultAdapter(this);
@@ -61,7 +66,7 @@ public class MainActivity extends AppCompatActivity implements Dialog.DialogList
             @Override
             public void onClick(View v) {
                 startActivity(new Intent(getApplicationContext(),ScanCodeActivity.class));
-            if(ref.child(resultQR) != null){
+            if(rfideingabe == null){
                 rfideingabe.setText(resultQR);
             }else{
                 Toast.makeText(MainActivity.this, "RFID nicht gefunden", Toast.LENGTH_LONG).show();
@@ -70,39 +75,45 @@ public class MainActivity extends AppCompatActivity implements Dialog.DialogList
         });
 
 
-
         login.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view){
-                final String PA;
-                String mtID = rfideingabe.getText().toString();
-                PA = passeingabe.getText().toString();
+                final String password;
+                final String userEingabe;
+                final String email = "@agora.de";
 
-                if(ref.child(mtID) != null){
-                    ref.child(mtID).addValueEventListener(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                            RFID rfid = dataSnapshot.getValue(RFID.class);
-                            if(PA.equals(rfid.getPassword()))
-                            {
-                                Toast.makeText(MainActivity.this, "Login Successfull", Toast.LENGTH_LONG).show();
-                                SharedPreferences.Editor editor = getSharedPreferences("SHARED", MODE_PRIVATE).edit();
-                                editor.putString("RFID", rfid.getRFID());
-                                editor.apply();
-                                Intent ueber = new Intent(MainActivity.this , Uebersicht.class);
-                                startActivity(ueber);
-                            }
-                            else{
-                                Toast.makeText(MainActivity.this, "Enter Correct Password", Toast.LENGTH_LONG).show();
-                            }
-                        }
-                        @Override
-                        public void onCancelled(@NonNull DatabaseError databaseError) {
-                        }
-                    });
-                } else{
-                    Toast.makeText(MainActivity.this, "Mitarbeiter Does not Exist", Toast.LENGTH_LONG).show();
+                userEingabe = rfideingabe.getText().toString();
+                password = passeingabe.getText().toString();
+
+                if(userEingabe.toLowerCase().contains(email.toLowerCase())){
+                }else {
+                    rfideingabe.append(email);
                 }
+
+
+                final ProgressDialog progressDialog = ProgressDialog.show(MainActivity.this, "Please wait...", "Proccessing...", true);
+                (firebaseAuth.signInWithEmailAndPassword(rfideingabe.getText().toString(), password)).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        progressDialog.dismiss();
+                        if(task.isSuccessful()){
+                           //Uebergabe
+                            SharedPreferences.Editor editor = getSharedPreferences("SHARED", MODE_PRIVATE).edit();
+                            editor.putString("USER", userEingabe);
+                            editor.apply();
+                            Toast.makeText(MainActivity.this, "Login successful", Toast.LENGTH_LONG).show();
+                           //next screen
+                            Intent i = new Intent(MainActivity.this, Uebersicht.class);
+                            i.putExtra("Email", firebaseAuth.getCurrentUser().getEmail());
+                            startActivity(i);
+                        }else{
+                            Log.e("Error", task.getException().toString());
+                            Toast.makeText(MainActivity.this, task.getException().getMessage(), Toast.LENGTH_LONG).show();
+                            rfideingabe.setText("");
+                            passeingabe.setText("");
+                        }
+                    }
+                });
             }
         });
 
@@ -113,6 +124,15 @@ public class MainActivity extends AppCompatActivity implements Dialog.DialogList
             @Override
             public void onClick(View view){
                 openDialog();
+            }
+        });
+
+        //Geht zum zweiten LoginScreen
+        loginZwei.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                Intent auth = new Intent(MainActivity.this , Auth.class);
+                startActivity(auth);
             }
         });
     }
@@ -127,3 +147,7 @@ public class MainActivity extends AppCompatActivity implements Dialog.DialogList
         passeingabe.setText(password);
     }
 }
+
+
+
+

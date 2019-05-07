@@ -1,11 +1,14 @@
 package com.example.agoracard;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
@@ -17,7 +20,13 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 public class Uebersicht extends AppCompatActivity {
 
@@ -28,9 +37,10 @@ public class Uebersicht extends AppCompatActivity {
     String sharedP = null;
     Button logout;
 
+    private Context context;
+
     //Adapter um die Daten zu speichern
     ArrayList<String> list;
-    ArrayAdapter<String> adapter;
     Training data;
 
     //Um Login Daten aus der Firebase Datenbank zu holen, Login
@@ -41,24 +51,29 @@ public class Uebersicht extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_uebersicht);
 
+        //Für die Tabelle
+        ViewGroup headerView = (ViewGroup) getLayoutInflater().inflate(R.layout.header, listView, false);
+
+        context = this;
+
         data = new Training();
-        listView = (ListView)findViewById(R.id.listViewID);
-        vorname = (TextView)findViewById(R.id.vorname_ausgabe);
-        nachname = (TextView)findViewById(R.id.nachname_ausgabe);
-        date = (TextView)findViewById(R.id.gebut_ausgabe);
+        listView = (ListView) findViewById(R.id.listViewID);
+        vorname = (TextView) findViewById(R.id.vorname_ausgabe);
+        nachname = (TextView) findViewById(R.id.nachname_ausgabe);
+        date = (TextView) findViewById(R.id.gebut_ausgabe);
         list = new ArrayList<>();
-        logout = (Button)findViewById(R.id.btn_logout);
+        logout = (Button) findViewById(R.id.btn_logout);
 
         final SharedPreferences prefs = getSharedPreferences("SHARED", MODE_PRIVATE);
         if (prefs != null) {
-            String shared = prefs.getString("RFID", "No name defined");
+            String shared = prefs.getString("USER", "No name defined");
             //vorname.setText(shared);
             sharedP = shared;
         }
 
 
         //Um Daten aus der Firebase Datenbank zu holen, Login
-        ref = FirebaseDatabase.getInstance().getReference().child("RFID").child(sharedP);
+        ref = FirebaseDatabase.getInstance().getReference().child("USER").child(sharedP);
         ValueEventListener listener = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
@@ -66,6 +81,7 @@ public class Uebersicht extends AppCompatActivity {
                 nachname.setText(dataSnapshot.child("Person").child("Nachname").getValue(String.class));
                 date.setText(dataSnapshot.child("Person").child("Geburtsdatum").getValue(String.class));
             }
+
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
             }
@@ -74,31 +90,70 @@ public class Uebersicht extends AppCompatActivity {
 
 
 
-
-        ref = FirebaseDatabase.getInstance().getReference().child("RFID").child(sharedP).child("Training");
-        adapter = new ArrayAdapter<String>(this, R.layout.training_info, R.id.trainingInfo, list);
+        ref = FirebaseDatabase.getInstance().getReference().child("USER").child(sharedP).child("Training");
+        listView.addHeaderView(headerView);
         ref.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                for(DataSnapshot ds: dataSnapshot.getChildren()){
+                ArrayList<String[]> items = new ArrayList<>();
+                for (DataSnapshot ds : dataSnapshot.getChildren()) {
                     data = ds.getValue(Training.class);
-                    list.add("Die Schulung im Bereich " + data.getName() + " ist am " + data.getDate() + " fällig");
+                    String[] item = new String[]{
+                          data.getName(), data.getDate()
+                    };
+                    items.add(item);
                 }
-                listView.setAdapter(adapter);
+                //sort
+                sortData(items);
+
+                ArrayList<String[]> result = new ArrayList<>(items.size());
+                for(String[] item : items){
+
+                }
+
+                ListAdapter listadapter = new ListAdapter(context , R.layout.rowlayout, R.id.rowtraining, items);
+                listView.setAdapter(listadapter);
             }
+
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
             }
         });
 
 
+
+
         logout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                prefs.edit().remove("RFID").apply();
+                prefs.edit().remove("USER").apply();
                 startActivity(new Intent(Uebersicht.this, MainActivity.class));
+                //Uebergabe
+                SharedPreferences.Editor editor = getSharedPreferences("SHARED", MODE_PRIVATE).edit();
+                sharedP = null;
+                editor.putString("USER", sharedP);
+                editor.apply();
             }
         });
+
+
     }
+
+    //Method sort Data
+    public static void sortData(final ArrayList<String[]> list){
+        Collections.sort(list, new Comparator<String[]>() {
+            DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
+            @Override
+            public int compare(String[] o1, String[] o2) {
+                try {
+                        return dateFormat.parse(o1[1]).compareTo(dateFormat.parse(o2[1]));
+                    }
+                    catch (ParseException e1) {
+                    return 0;
+                }
+        }});
+}
+
+
 
 }
