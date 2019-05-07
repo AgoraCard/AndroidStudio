@@ -59,14 +59,15 @@
         android:text="Dialog"
         android:textSize="16sp"
         android:id="@+id/btn_dialog"
+        android:visibility="gone"
         />
 
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
-        android:text="Login Art 2"
+        android:text="Create"
         android:textSize="16sp"
-        android:id="@+id/loginZwei"/>
+        android:id="@+id/btn_create"/>
 
 </LinearLayout>

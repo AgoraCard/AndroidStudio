@@ -38,6 +38,10 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".ScanCodeActivity"
+            android:label="@string/app_name">
+        </activity>
 
     </application>
 </manifest>
