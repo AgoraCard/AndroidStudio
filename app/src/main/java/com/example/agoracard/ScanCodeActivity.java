@@ -22,6 +22,11 @@ public class ScanCodeActivity extends AppCompatActivity implements ZXingScannerV
         super.onCreate(savedInstanceState);
         ScannerView = new ZXingScannerView(this);
         setContentView(ScannerView);
+    }
+
+    @Override
+    protected void onResume(){
+        super.onResume();
 
         checkCameraPermission();
     }

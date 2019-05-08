@@ -19,6 +19,7 @@ import android.nfc.tech.NfcF;
 import android.nfc.tech.NfcV;
 import android.os.Parcelable;
 import android.support.annotation.NonNull;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -46,6 +47,7 @@ public class MainActivity extends AppCompatActivity implements Dialog.DialogList
 
     public static String resultQR = "";
     Button scan_btn;
+    FloatingActionButton fab;
     EditText rfideingabe = null;
     EditText passeingabe = null;
     Button login;
@@ -58,8 +60,8 @@ public class MainActivity extends AppCompatActivity implements Dialog.DialogList
     private FirebaseAuth firebaseAuth;
 
     // list of NFC technologies detected:
-    private final String[][] techList = new String[][] {
-            new String[] {
+    private final String[][] techList = new String[][]{
+            new String[]{
                     NfcA.class.getName(),
                     NfcB.class.getName(),
                     NfcF.class.getName(),
@@ -75,39 +77,38 @@ public class MainActivity extends AppCompatActivity implements Dialog.DialogList
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        rfideingabe = (EditText)findViewById(R.id.RFID_eingabe);
-        passeingabe = (EditText)findViewById(R.id.Password_eingabe);
-        login = (Button)findViewById(R.id.btn_login);
-        scan_btn = (Button)findViewById(R.id.btn_scan);
-        btn_create = (Button)findViewById(R.id.btn_create);
+        rfideingabe = (EditText) findViewById(R.id.RFID_eingabe);
+        passeingabe = (EditText) findViewById(R.id.Password_eingabe);
+        login = (Button) findViewById(R.id.btn_login);
+        scan_btn = (Button) findViewById(R.id.btn_scan);
+        btn_create = (Button) findViewById(R.id.btn_create);
 
         firebaseAuth = FirebaseAuth.getInstance();
 
+        fab = (FloatingActionButton) findViewById(R.id.fab);
+
         //Zeigt an, ob NFC verfügbar
         nfcAdapter = NfcAdapter.getDefaultAdapter(this);
-        if(nfcAdapter != null && nfcAdapter.isEnabled()){
-            Toast.makeText(this, "NFC available!", Toast.LENGTH_LONG).show();
-        }else{
-            Toast.makeText(this, "NFC not available", Toast.LENGTH_LONG).show();
-        }
+
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startActivity(new Intent(android.provider.Settings.ACTION_NFC_SETTINGS));
+            }
+        });
 
         //Oeffnet den QR-Reader
         scan_btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startActivity(new Intent(getApplicationContext(),ScanCodeActivity.class));
-            if(rfideingabe == null){
-                rfideingabe.setText(resultQR);
-            }else{
-                Toast.makeText(MainActivity.this, "RFID nicht gefunden", Toast.LENGTH_LONG).show();
-            }
+                startActivity(new Intent(getApplicationContext(), ScanCodeActivity.class));
             }
         });
 
 
-        login.setOnClickListener(new View.OnClickListener(){
+        login.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view){
+            public void onClick(View view) {
                 final String password;
                 final String userEingabe;
                 final String email = "@agora.de";
@@ -115,8 +116,8 @@ public class MainActivity extends AppCompatActivity implements Dialog.DialogList
                 userEingabe = rfideingabe.getText().toString();
                 password = passeingabe.getText().toString();
 
-                if(userEingabe.toLowerCase().contains(email.toLowerCase())){
-                }else {
+                if (userEingabe.toLowerCase().contains(email.toLowerCase())) {
+                } else {
                     rfideingabe.append(email);
                 }
 
@@ -126,17 +127,17 @@ public class MainActivity extends AppCompatActivity implements Dialog.DialogList
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         progressDialog.dismiss();
-                        if(task.isSuccessful()){
-                           //Uebergabe
+                        if (task.isSuccessful()) {
+                            //Uebergabe
                             SharedPreferences.Editor editor = getSharedPreferences("SHARED", MODE_PRIVATE).edit();
                             editor.putString("USER", userEingabe);
                             editor.apply();
                             Toast.makeText(MainActivity.this, "Login successful", Toast.LENGTH_LONG).show();
-                           //next screen
+                            //next screen
                             Intent i = new Intent(MainActivity.this, Uebersicht.class);
                             i.putExtra("Email", firebaseAuth.getCurrentUser().getEmail());
                             startActivity(i);
-                        }else{
+                        } else {
                             Log.e("Error", task.getException().toString());
                             Toast.makeText(MainActivity.this, task.getException().getMessage(), Toast.LENGTH_LONG).show();
                             rfideingabe.setText("");
@@ -148,11 +149,10 @@ public class MainActivity extends AppCompatActivity implements Dialog.DialogList
         });
 
 
-
-        weiter = (Button)findViewById(R.id.btn_dialog);
-        weiter.setOnClickListener(new View.OnClickListener(){
+        weiter = (Button) findViewById(R.id.btn_dialog);
+        weiter.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view){
+            public void onClick(View view) {
                 openDialog();
             }
         });
@@ -175,7 +175,7 @@ public class MainActivity extends AppCompatActivity implements Dialog.DialogList
                 final String userEingabe;
                 final String email = "@agora.de";
 
-                if(rfideingabe.getText().toString().toLowerCase().contains(email.toLowerCase()) == false){
+                if (rfideingabe.getText().toString().toLowerCase().contains(email.toLowerCase()) == false) {
                     rfideingabe.append(email);
                 }
 
@@ -202,7 +202,7 @@ public class MainActivity extends AppCompatActivity implements Dialog.DialogList
         });
     }
 
-    public void openDialog(){
+    public void openDialog() {
         Dialog dialog = new Dialog();
         dialog.show(getSupportFragmentManager(), "dialog");
     }
@@ -214,10 +214,18 @@ public class MainActivity extends AppCompatActivity implements Dialog.DialogList
 
     //nfc stuff
     @Override
-    public void onResume(){
+    public void onResume() {
         super.onResume();
 
-        if(resultQR != ""){
+        if (nfcAdapter != null && nfcAdapter.isEnabled() == false) {
+
+            Toast.makeText(getApplicationContext(), "Click the Button in the right corner to activate NFC", Toast.LENGTH_LONG).show();
+            fab.setVisibility(View.VISIBLE);
+        }else{
+            fab.setVisibility(View.GONE);
+        }
+
+        if (resultQR != "") {
             rfideingabe.setText((resultQR));
         }
 
@@ -248,42 +256,39 @@ public class MainActivity extends AppCompatActivity implements Dialog.DialogList
 
         if (intent.getAction().equals(NfcAdapter.ACTION_TAG_DISCOVERED)) {
             Log.d("onNewIntent", "2");
-            rfideingabe.setText( ByteArrayToHexString(intent.getByteArrayExtra(NfcAdapter.EXTRA_ID)));
+            rfideingabe.setText(ByteArrayToHexString(intent.getByteArrayExtra(NfcAdapter.EXTRA_ID)));
 
             //if(getIntent().hasExtra(NfcAdapter.EXTRA_TAG)){
 
             Parcelable tagN = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
             if (tagN != null) {
-                Log.d("nfc","Parcelable OK");
+                Log.d("nfc", "Parcelable OK");
                 NdefMessage[] msgs;
                 byte[] empty = new byte[0];
                 byte[] id = intent.getByteArrayExtra(NfcAdapter.EXTRA_ID);
                 byte[] payload = dumpTagData(tagN).getBytes();
                 NdefRecord record = new NdefRecord(NdefRecord.TNF_UNKNOWN, empty, id, payload);
-                NdefMessage msg = new NdefMessage(new NdefRecord[] { record });
-                msgs = new NdefMessage[] { msg };
+                NdefMessage msg = new NdefMessage(new NdefRecord[]{record});
+                msgs = new NdefMessage[]{msg};
 
                 //Log.d(TAG, msgs[0].toString());
 
 
-            }
-            else {
+            } else {
                 Log.d("nfc", "Parcelable NULL");
             }
-
 
 
             Parcelable[] messages1 = intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES);
             if (messages1 != null) {
                 Log.d("nfc", "Found " + messages1.length + " NDEF messages");
-            }
-            else {
+            } else {
                 Log.d("nfc", "Not EXTRA_NDEF_MESSAGES");
             }
 
             Tag tag = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
             Ndef ndef = Ndef.get(tag);
-            if(ndef != null) {
+            if (ndef != null) {
 
                 Log.d("onNewIntent:", "NfcAdapter.EXTRA_TAG");
 
@@ -291,8 +296,7 @@ public class MainActivity extends AppCompatActivity implements Dialog.DialogList
                 if (messages != null) {
                     Log.d("nfc", "Found " + messages.length + " NDEF messages");
                 }
-            }
-            else {
+            } else {
                 Log.d("nfc", "Write to an unformatted tag not implemented");
             }
 
@@ -416,16 +420,15 @@ public class MainActivity extends AppCompatActivity implements Dialog.DialogList
         return result;
     }
 
-    private String ByteArrayToHexString(byte [] inarray) {
+    private String ByteArrayToHexString(byte[] inarray) {
 
         Log.d("ByteArrayToHexString", inarray.toString());
 
         int i, j, in;
-        String [] hex = {"0","1","2","3","4","5","6","7","8","9","A","B","C","D","E","F"};
-        String out= "";
+        String[] hex = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F"};
+        String out = "";
 
-        for(j = 0 ; j < inarray.length ; ++j)
-        {
+        for (j = 0; j < inarray.length; ++j) {
             in = (int) inarray[j] & 0xff;
             i = (in >> 4) & 0x0f;
             out += hex[i];
@@ -434,7 +437,7 @@ public class MainActivity extends AppCompatActivity implements Dialog.DialogList
         }
 //CE7AEED4
 //EE7BEED4
-        Log.d("ByteArrayToHexString", String.format("%0" + (inarray.length * 2) + "X", new BigInteger(1,inarray)));
+        Log.d("ByteArrayToHexString", String.format("%0" + (inarray.length * 2) + "X", new BigInteger(1, inarray)));
 
 
         return out;
