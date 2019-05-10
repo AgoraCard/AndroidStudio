@@ -1,5 +1,6 @@
 package com.example.agoracard;
 
+import android.app.FragmentManager;
 import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.Intent;
@@ -20,6 +21,8 @@ import android.nfc.tech.NfcV;
 import android.os.Parcelable;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.FragmentTransaction;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -43,7 +46,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-public class MainActivity extends AppCompatActivity implements Dialog.DialogListener {
+public class MainActivity extends AppCompatActivity {
 
     public static String resultQR = "";
     Button scan_btn;
@@ -87,8 +90,16 @@ public class MainActivity extends AppCompatActivity implements Dialog.DialogList
 
         fab = (FloatingActionButton) findViewById(R.id.fab);
 
-        //Zeigt an, ob NFC verfügbar
+        //nfc active check
         nfcAdapter = NfcAdapter.getDefaultAdapter(this);
+
+        if (nfcAdapter != null && nfcAdapter.isEnabled() == false) {
+
+            Toast.makeText(getApplicationContext(), "Click the Button in the right corner to activate NFC", Toast.LENGTH_LONG).show();
+            fab.setVisibility(View.VISIBLE);
+        } else {
+            fab.setVisibility(View.GONE);
+        }
 
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -113,58 +124,44 @@ public class MainActivity extends AppCompatActivity implements Dialog.DialogList
                 final String userEingabe;
                 final String email = "@agora.de";
 
-                userEingabe = rfideingabe.getText().toString();
                 password = passeingabe.getText().toString();
+                userEingabe = rfideingabe.getText().toString();
 
-                if (userEingabe.toLowerCase().contains(email.toLowerCase())) {
-                } else {
-                    rfideingabe.append(email);
+                //validating data
+                //matches("\\.|#\\$|\\[|\\]") only worked when the regex char was the first in the string
+                if (userEingabe.contains(".") ||
+                        userEingabe.contains("#") ||
+                        userEingabe.contains("$") ||
+                        userEingabe.contains("[") ||
+                        userEingabe.contains("]")) {
+                    showDialog("Error", "You can not use ., #, $, [ or ] in your Name");
+                    return;
                 }
 
+                if(password.length() == 0 || userEingabe.length() == 0){
+                    showDialog("Error", "Name and Password can not be empty");
+                    return;
+                }
 
                 final ProgressDialog progressDialog = ProgressDialog.show(MainActivity.this, "Please wait...", "Proccessing...", true);
-                (firebaseAuth.signInWithEmailAndPassword(rfideingabe.getText().toString(), password)).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+                (firebaseAuth.signInWithEmailAndPassword(userEingabe + email, password)).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         progressDialog.dismiss();
                         if (task.isSuccessful()) {
-                            //Uebergabe
-                            SharedPreferences.Editor editor = getSharedPreferences("SHARED", MODE_PRIVATE).edit();
-                            editor.putString("USER", userEingabe);
-                            editor.apply();
-                            Toast.makeText(MainActivity.this, "Login successful", Toast.LENGTH_LONG).show();
-                            //next screen
-                            Intent i = new Intent(MainActivity.this, Uebersicht.class);
-                            i.putExtra("Email", firebaseAuth.getCurrentUser().getEmail());
-                            startActivity(i);
+                            //open detail screen
+                            Intent intent = new Intent(MainActivity.this, Uebersicht.class);
+                            intent.putExtra("LoginName", firebaseAuth.getCurrentUser().getEmail().replaceAll(email, ""));
+                            startActivity(intent);
                         } else {
                             Log.e("Error", task.getException().toString());
                             Toast.makeText(MainActivity.this, task.getException().getMessage(), Toast.LENGTH_LONG).show();
-                            rfideingabe.setText("");
-                            passeingabe.setText("");
                         }
                     }
                 });
             }
         });
 
-
-        weiter = (Button) findViewById(R.id.btn_dialog);
-        weiter.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                openDialog();
-            }
-        });
-
-//        //Geht zum zweiten LoginScreen
-//        btn_create.setOnClickListener(new View.OnClickListener(){
-//            @Override
-//            public void onClick(View v) {
-//                Intent auth = new Intent(MainActivity.this , Auth.class);
-//                startActivity(auth);
-//            }
-//        });
 
         btn_create.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -202,28 +199,20 @@ public class MainActivity extends AppCompatActivity implements Dialog.DialogList
         });
     }
 
-    public void openDialog() {
-        Dialog dialog = new Dialog();
-        dialog.show(getSupportFragmentManager(), "dialog");
+    public void showDialog(String title, String message) {
+
+        new AlertDialog.Builder(MainActivity.this)
+                .setTitle(title)
+                .setMessage(message)
+                .setPositiveButton(android.R.string.ok, null)
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .show();
     }
 
-    @Override
-    public void applyText(String password) {
-        passeingabe.setText(password);
-    }
-
-    //nfc stuff
+    //region nfc stuff
     @Override
     public void onResume() {
         super.onResume();
-
-        if (nfcAdapter != null && nfcAdapter.isEnabled() == false) {
-
-            Toast.makeText(getApplicationContext(), "Click the Button in the right corner to activate NFC", Toast.LENGTH_LONG).show();
-            fab.setVisibility(View.VISIBLE);
-        }else{
-            fab.setVisibility(View.GONE);
-        }
 
         if (resultQR != "") {
             rfideingabe.setText((resultQR));
@@ -442,7 +431,7 @@ public class MainActivity extends AppCompatActivity implements Dialog.DialogList
 
         return out;
     }
-
+//endregion
 }
 
 

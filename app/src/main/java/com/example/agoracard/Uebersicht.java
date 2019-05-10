@@ -34,7 +34,7 @@ public class Uebersicht extends AppCompatActivity {
     TextView nachname;
     TextView date;
     ListView listView;
-    String sharedP = null;
+    String loginName = null;
     Button logout;
 
     private Context context;
@@ -64,16 +64,11 @@ public class Uebersicht extends AppCompatActivity {
         list = new ArrayList<>();
         logout = (Button) findViewById(R.id.btn_logout);
 
-        final SharedPreferences prefs = getSharedPreferences("SHARED", MODE_PRIVATE);
-        if (prefs != null) {
-            String shared = prefs.getString("USER", "No name defined");
-            //vorname.setText(shared);
-            sharedP = shared;
-        }
+        loginName = this.getIntent().getStringExtra("LoginName");
 
 
         //Um Daten aus der Firebase Datenbank zu holen, Login
-        ref = FirebaseDatabase.getInstance().getReference().child("USER").child(sharedP);
+        ref = FirebaseDatabase.getInstance().getReference().child("USER").child(loginName);
         ValueEventListener listener = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
@@ -89,8 +84,7 @@ public class Uebersicht extends AppCompatActivity {
         ref.addValueEventListener(listener);
 
 
-
-        ref = FirebaseDatabase.getInstance().getReference().child("USER").child(sharedP).child("Training");
+        ref = FirebaseDatabase.getInstance().getReference().child("USER").child(loginName).child("Training");
         listView.addHeaderView(headerView);
         ref.addValueEventListener(new ValueEventListener() {
             @Override
@@ -99,7 +93,7 @@ public class Uebersicht extends AppCompatActivity {
                 for (DataSnapshot ds : dataSnapshot.getChildren()) {
                     data = ds.getValue(Training.class);
                     String[] item = new String[]{
-                          data.getName(), data.getDate()
+                            data.getName(), data.getDate()
                     };
                     items.add(item);
                 }
@@ -107,11 +101,11 @@ public class Uebersicht extends AppCompatActivity {
                 sortData(items);
 
                 ArrayList<String[]> result = new ArrayList<>(items.size());
-                for(String[] item : items){
+                for (String[] item : items) {
 
                 }
 
-                ListAdapter listadapter = new ListAdapter(context , R.layout.rowlayout, R.id.rowtraining, items);
+                ListAdapter listadapter = new ListAdapter(context, R.layout.rowlayout, R.id.rowtraining, items);
                 listView.setAdapter(listadapter);
             }
 
@@ -121,39 +115,29 @@ public class Uebersicht extends AppCompatActivity {
         });
 
 
-
-
         logout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                prefs.edit().remove("USER").apply();
-                startActivity(new Intent(Uebersicht.this, MainActivity.class));
-                //Uebergabe
-                SharedPreferences.Editor editor = getSharedPreferences("SHARED", MODE_PRIVATE).edit();
-                sharedP = null;
-                editor.putString("USER", sharedP);
-                editor.apply();
+                onBackPressed();
             }
         });
-
 
     }
 
     //Method sort Data
-    public static void sortData(final ArrayList<String[]> list){
+    public static void sortData(final ArrayList<String[]> list) {
         Collections.sort(list, new Comparator<String[]>() {
             DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
+
             @Override
             public int compare(String[] o1, String[] o2) {
                 try {
-                        return dateFormat.parse(o1[1]).compareTo(dateFormat.parse(o2[1]));
-                    }
-                    catch (ParseException e1) {
+                    return dateFormat.parse(o1[1]).compareTo(dateFormat.parse(o2[1]));
+                } catch (ParseException e1) {
                     return 0;
                 }
-        }});
-}
-
-
+            }
+        });
+    }
 
 }
