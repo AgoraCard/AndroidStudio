@@ -11,9 +11,9 @@ import java.util.ArrayList;
 
 public class ListAdapter extends ArrayAdapter<String> {
 
-    int vg;
-    ArrayList<String[]> items_list;
-    Context context;
+    private int vg;
+    private ArrayList<String[]> items_list;
+    private Context context;
 
     public ListAdapter(Context context, int vg, int id, ArrayList<String[]> items_list){
         super(context, vg, id, new String[items_list.size()]);

@@ -12,17 +12,21 @@
         <TextView
             android:text="Kurs"
             android:textStyle="bold"
-            android:background="#c0c0c0"
+            android:textSize="16sp"
+            android:background="@color/colorPrimaryDark"
             android:layout_column="0"
             android:padding="10dp"
+            android:textColor="#ffffff"
             android:layout_span="2"
             />
 
         <TextView
             android:text="Datum"
+            android:textSize="16sp"
             android:textStyle="bold"
-            android:background="#c0c0c0"
+            android:background="@color/colorPrimaryDark"
             android:layout_column="1"
+            android:textColor="#ffffff"
             android:padding="10dp"
             />
 

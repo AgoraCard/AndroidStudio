@@ -25,6 +25,7 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.AppCompatImageButton;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -49,14 +50,13 @@ import java.util.Date;
 public class MainActivity extends AppCompatActivity {
 
     public static String resultQR = "";
-    Button scan_btn;
+    AppCompatImageButton scan_btn;
     FloatingActionButton fab;
-    EditText rfideingabe = null;
-    EditText passeingabe = null;
-    Button login;
+    EditText id_et = null;
+    EditText pw_et = null;
+    Button login_btn;
     NfcAdapter nfcAdapter;
 
-    Button weiter;
     Button btn_create;
 
     //Um Login zu machen
@@ -80,10 +80,10 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        rfideingabe = (EditText) findViewById(R.id.RFID_eingabe);
-        passeingabe = (EditText) findViewById(R.id.Password_eingabe);
-        login = (Button) findViewById(R.id.btn_login);
-        scan_btn = (Button) findViewById(R.id.btn_scan);
+        id_et = (EditText) findViewById(R.id.id_et);
+        pw_et = (EditText) findViewById(R.id.pw_et);
+        login_btn = (Button) findViewById(R.id.btn_login);
+        scan_btn = (AppCompatImageButton) findViewById(R.id.btn_scan);
         btn_create = (Button) findViewById(R.id.btn_create);
 
         firebaseAuth = FirebaseAuth.getInstance();
@@ -117,15 +117,15 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
-        login.setOnClickListener(new View.OnClickListener() {
+        login_btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 final String password;
                 final String userEingabe;
                 final String email = "@agora.de";
 
-                password = passeingabe.getText().toString();
-                userEingabe = rfideingabe.getText().toString();
+                password = pw_et.getText().toString();
+                userEingabe = id_et.getText().toString();
 
                 //validating data
                 //matches("\\.|#\\$|\\[|\\]") only worked when the regex char was the first in the string
@@ -151,7 +151,7 @@ public class MainActivity extends AppCompatActivity {
                         if (task.isSuccessful()) {
                             //open detail screen
                             Intent intent = new Intent(MainActivity.this, Uebersicht.class);
-                            intent.putExtra("LoginName", firebaseAuth.getCurrentUser().getEmail().replaceAll(email, ""));
+                            intent.putExtra("LoginName", userEingabe);
                             startActivity(intent);
                         } else {
                             Log.e("Error", task.getException().toString());
@@ -172,13 +172,13 @@ public class MainActivity extends AppCompatActivity {
                 final String userEingabe;
                 final String email = "@agora.de";
 
-                if (rfideingabe.getText().toString().toLowerCase().contains(email.toLowerCase()) == false) {
-                    rfideingabe.append(email);
+                if (id_et.getText().toString().toLowerCase().contains(email.toLowerCase()) == false) {
+                    userEingabe = id_et.getText().toString() + email;
+                }else{
+                    userEingabe = id_et.getText().toString();
                 }
 
-                userEingabe = rfideingabe.getText().toString();
-                password = passeingabe.getText().toString();
-
+                password = pw_et.getText().toString();
 
                 //Legt User an
                 (firebaseAuth.createUserWithEmailAndPassword(userEingabe,
@@ -187,8 +187,6 @@ public class MainActivity extends AppCompatActivity {
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if (task.isSuccessful()) {
                             Toast.makeText(MainActivity.this, "Registration successful", Toast.LENGTH_LONG).show();
-                            Intent i = new Intent(MainActivity.this, Auth.class);
-                            startActivity(i);
                         } else {
                             Log.e("Error", task.getException().toString());
                             Toast.makeText(MainActivity.this, task.getException().getMessage(), Toast.LENGTH_LONG).show();
@@ -215,7 +213,7 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
 
         if (resultQR != "") {
-            rfideingabe.setText((resultQR));
+            id_et.setText((resultQR));
         }
 
         // creating pending intent:
@@ -245,7 +243,7 @@ public class MainActivity extends AppCompatActivity {
 
         if (intent.getAction().equals(NfcAdapter.ACTION_TAG_DISCOVERED)) {
             Log.d("onNewIntent", "2");
-            rfideingabe.setText(ByteArrayToHexString(intent.getByteArrayExtra(NfcAdapter.EXTRA_ID)));
+            id_et.setText(ByteArrayToHexString(intent.getByteArrayExtra(NfcAdapter.EXTRA_ID)));
 
             //if(getIntent().hasExtra(NfcAdapter.EXTRA_TAG)){
 
@@ -300,7 +298,7 @@ public class MainActivity extends AppCompatActivity {
         byte[] id = tag.getId();
 
         sb.append(getReversed(id));
-        rfideingabe.setText(sb.toString());
+        id_et.setText(sb.toString());
 
 //        sb.append("Tag ID (hex): ").append(getHex(id)).append("\n");
 //        sb.append("Tag ID (dec): ").append(getDec(id)).append("\n");
@@ -368,7 +366,7 @@ public class MainActivity extends AppCompatActivity {
 //        DateFormat TIME_FORMAT = SimpleDateFormat.getDateTimeInstance();
 //        Date now = new Date();
 //
-//        rfideingabe.setText(TIME_FORMAT.format(now) + '\n' + sb.toString());
+//        id_et.setText(TIME_FORMAT.format(now) + '\n' + sb.toString());
         return sb.toString();
     }
 

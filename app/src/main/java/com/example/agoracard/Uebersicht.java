@@ -7,12 +7,15 @@ import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -30,18 +33,19 @@ import java.util.List;
 
 public class Uebersicht extends AppCompatActivity {
 
-    TextView vorname;
-    TextView nachname;
-    TextView date;
-    ListView listView;
-    String loginName = null;
-    Button logout;
+    private TextView firstName_tv;
+    private TextView lastName_tv;
+    private TextView date_tv;
+    private ListView listView;
+    private String loginName = null;
+    private Button logout_btn;
+    private ProgressBar progressLoader;
 
     private Context context;
 
     //Adapter um die Daten zu speichern
-    ArrayList<String> list;
-    Training data;
+    private ArrayList<String> list;
+    private Training data;
 
     //Um Login Daten aus der Firebase Datenbank zu holen, Login
     private DatabaseReference ref;
@@ -58,12 +62,12 @@ public class Uebersicht extends AppCompatActivity {
 
         data = new Training();
         listView = (ListView) findViewById(R.id.listViewID);
-        vorname = (TextView) findViewById(R.id.vorname_ausgabe);
-        nachname = (TextView) findViewById(R.id.nachname_ausgabe);
-        date = (TextView) findViewById(R.id.gebut_ausgabe);
+        firstName_tv = (TextView) findViewById(R.id.firstName_tv);
+        lastName_tv = (TextView) findViewById(R.id.lastName_tv);
+        date_tv = (TextView) findViewById(R.id.date_tv);
         list = new ArrayList<>();
-        logout = (Button) findViewById(R.id.btn_logout);
-
+        logout_btn = (Button) findViewById(R.id.btn_logout);
+        progressLoader = (ProgressBar) findViewById(R.id.progress_loader);
         loginName = this.getIntent().getStringExtra("LoginName");
 
 
@@ -72,9 +76,12 @@ public class Uebersicht extends AppCompatActivity {
         ValueEventListener listener = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                vorname.setText(dataSnapshot.child("Person").child("Vorname").getValue(String.class));
-                nachname.setText(dataSnapshot.child("Person").child("Nachname").getValue(String.class));
-                date.setText(dataSnapshot.child("Person").child("Geburtsdatum").getValue(String.class));
+                progressLoader.setVisibility(View.GONE);
+
+                //TODO: the keys should not be hardcoded
+                firstName_tv.setText(dataSnapshot.child("Person").child("Vorname").getValue(String.class));
+                lastName_tv.setText(dataSnapshot.child("Person").child("Nachname").getValue(String.class));
+                date_tv.setText(dataSnapshot.child("Person").child("Geburtsdatum").getValue(String.class));
             }
 
             @Override
@@ -105,6 +112,11 @@ public class Uebersicht extends AppCompatActivity {
 
                 }
 
+                if(items.size() == 0){
+                    Toast.makeText(Uebersicht.this, "no data found", Toast.LENGTH_LONG).show();
+                    return;
+                }
+
                 ListAdapter listadapter = new ListAdapter(context, R.layout.rowlayout, R.id.rowtraining, items);
                 listView.setAdapter(listadapter);
             }
@@ -115,7 +127,7 @@ public class Uebersicht extends AppCompatActivity {
         });
 
 
-        logout.setOnClickListener(new View.OnClickListener() {
+        logout_btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 onBackPressed();
