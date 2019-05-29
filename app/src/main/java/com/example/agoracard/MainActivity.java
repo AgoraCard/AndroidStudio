@@ -297,76 +297,9 @@ public class MainActivity extends AppCompatActivity {
         Tag tag = (Tag) p;
         byte[] id = tag.getId();
 
-        sb.append(getReversed(id));
+        sb.append(getHex(id)).append("\n");
         id_et.setText(sb.toString());
 
-//        sb.append("Tag ID (hex): ").append(getHex(id)).append("\n");
-//        sb.append("Tag ID (dec): ").append(getDec(id)).append("\n");
-//        sb.append("ID (reversed): ").append(getReversed(id)).append("\n");
-//
-//
-//
-//        String prefix = "android.nfc.tech.";
-//        sb.append("Technologies: ");
-//        for (String tech : tag.getTechList()) {
-//            sb.append(tech.substring(prefix.length()));
-//            sb.append(", ");
-//        }
-//        sb.delete(sb.length() - 2, sb.length());
-//        for (String tech : tag.getTechList()) {
-//            if (tech.equals(MifareClassic.class.getName())) {
-//                sb.append('\n');
-//                MifareClassic mifareTag = MifareClassic.get(tag);
-//                String type = "Unknown";
-//                switch (mifareTag.getType()) {
-//                    case MifareClassic.TYPE_CLASSIC:
-//                        type = "Classic";
-//                        break;
-//                    case MifareClassic.TYPE_PLUS:
-//                        type = "Plus";
-//                        break;
-//                    case MifareClassic.TYPE_PRO:
-//                        type = "Pro";
-//                        break;
-//                }
-//                sb.append("Mifare Classic type: ");
-//                sb.append(type);
-//                sb.append('\n');
-//
-//                sb.append("Mifare size: ");
-//                sb.append(mifareTag.getSize() + " bytes");
-//                sb.append('\n');
-//
-//                sb.append("Mifare sectors: ");
-//                sb.append(mifareTag.getSectorCount());
-//                sb.append('\n');
-//
-//                sb.append("Mifare blocks: ");
-//                sb.append(mifareTag.getBlockCount());
-//            }
-//
-//            if (tech.equals(MifareUltralight.class.getName())) {
-//                sb.append('\n');
-//                MifareUltralight mifareUlTag = MifareUltralight.get(tag);
-//                String type = "Unknown";
-//                switch (mifareUlTag.getType()) {
-//                    case MifareUltralight.TYPE_ULTRALIGHT:
-//                        type = "Ultralight";
-//                        break;
-//                    case MifareUltralight.TYPE_ULTRALIGHT_C:
-//                        type = "Ultralight C";
-//                        break;
-//                }
-//                sb.append("Mifare Ultralight type: ");
-//                sb.append(type);
-//            }
-//        }
-//        Log.d("Datos: ", sb.toString());
-//
-//        DateFormat TIME_FORMAT = SimpleDateFormat.getDateTimeInstance();
-//        Date now = new Date();
-//
-//        id_et.setText(TIME_FORMAT.format(now) + '\n' + sb.toString());
         return sb.toString();
     }
 
